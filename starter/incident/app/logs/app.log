@@ -1,0 +1,15 @@
+2026-01-05T08:00:01Z INFO  status-page starting
+2026-01-05T08:00:01Z DEBUG reading config from app/config/app.conf
+2026-01-05T08:00:01Z INFO  config loaded: host=localhost port=9091
+2026-01-05T08:00:02Z DEBUG registering /status route
+2026-01-05T08:00:02Z INFO  listening on http://localhost:9091
+2026-01-05T08:00:05Z DEBUG health check scheduled every 30s
+2026-01-05T08:00:35Z ERROR health check GET http://localhost:8080/status failed: connection refused
+2026-01-05T08:00:35Z DEBUG health check retrying in 5s
+2026-01-05T08:00:40Z ERROR health check retrying attempt 2 of 3 failed: connection refused
+2026-01-05T08:00:45Z ERROR health check retrying attempt 3 of 3 failed: connection refused
+2026-01-05T08:00:45Z WARN  giving up after 3 attempts
+2026-01-05T08:00:45Z ERROR status-page marked UNHEALTHY: no listener on expected port 8080
+2026-01-05T08:00:46Z DEBUG next full check in 300s
+2026-01-05T08:01:00Z INFO  request from 127.0.0.1 handled on port 9091
+2026-01-05T08:02:00Z INFO  request from 127.0.0.1 handled on port 9091

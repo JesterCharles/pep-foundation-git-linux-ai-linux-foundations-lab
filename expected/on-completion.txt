@@ -1,0 +1,13 @@
+test_checklist_copied_from_spaced_folder (test_incident.IncidentTest.test_checklist_copied_from_spaced_folder) ... ok
+test_config_port_matches_runbook (test_incident.IncidentTest.test_config_port_matches_runbook) ... ok
+test_env_file_exists_with_export_and_600 (test_incident.IncidentTest.test_env_file_exists_with_export_and_600) ... ok
+test_error_count_via_pipe (test_incident.IncidentTest.test_error_count_via_pipe) ... ok
+test_port_diagnosis_recorded (test_incident.IncidentTest.test_port_diagnosis_recorded) ... ok
+test_real_errors_filtered (test_incident.IncidentTest.test_real_errors_filtered) ... ok
+test_script_is_executable_750 (test_incident.IncidentTest.test_script_is_executable_750) ... ok
+test_status_script_runs_directly_and_reports_staging (test_incident.IncidentTest.test_status_script_runs_directly_and_reports_staging) ... ok
+
+----------------------------------------------------------------------
+Ran 8 tests in <seconds>s
+
+OK

@@ -1,0 +1,5 @@
+Launch checklist for status-page v1.1
+1. Health check green on http://localhost:8080/status
+2. bin/status.sh runs directly for the on-call group
+3. deploy.env readable by its owner only
+4. Release notes finished and merged
