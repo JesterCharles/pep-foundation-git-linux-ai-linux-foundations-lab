@@ -1,145 +1,118 @@
 # Service will not start
 
-The deploy status helper from the Git labs now has a tiny companion service,
-`status-page`, and it is unhealthy. The on-call teammate left you a folder with
-the logs, the config, a runbook and a half-finished launch checklist, then went
-home. Nothing here needs the real service to run: the evidence is all in files.
+A small service called `status-page` is unhealthy. The on-call teammate left you a
+folder of evidence: logs, a config file, a runbook and a launch checklist. You use
+the Linux shell to find the real errors, fix a file permission, set an environment
+variable and fix the port mismatch behind `connection refused`. The service never
+actually runs: all the evidence is in files.
 
-Your job: navigate the incident folder, pull the real errors out of the log with
-pipes and `grep`, fix the script permissions, set the deployment environment
-variable properly, and find and fix the port mismatch behind
-`connection refused`.
+- **Time:** about 15 minutes. If you pass 20, pause and finish in self-study.
+- **You need:** a bash terminal and Python 3.11 or newer. Linux permissions are part
+  of the lab, so use macOS or Linux (on Windows, see **Troubleshooting**).
+- **Offline:** no account, network, container or AI assistant.
 
-About 15 minutes of your scheduled exercise block (an estimate); if you pass
-20, pause and finish in self-study, using **Troubleshooting** if you are stuck.
-Everything runs on your own computer, offline: no account, no network, no
-container engine, no AI assistant.
-
-This is a Linux lab. It runs on **macOS or Linux**. On Windows, open an
-**Ubuntu (WSL) terminal** and run everything there: file permissions are a Linux
-concept, and Windows file systems do not carry them.
-
-## Open the project
-
-This repository is the whole lab. Clone it, then open the cloned folder in VS Code or any
-other editor or IDE (in VS Code: **File > Open Folder**). Nothing in this lab runs in a browser.
-
-Run every command below in a terminal at the repository root, the folder that holds this
-README: in VS Code use **Terminal > New Terminal**, which opens there; with any other editor,
-open a terminal and `cd` into the clone. The steps call this folder the lab folder.
-
-## What you edit
-
-Setup (step 2) builds `starter/incident/`; the paths below are relative to it.
-The checks read these files and their permission bits:
-
-| You create or change | How | Why the incident needs it |
-|---|---|---|
-| `triage/launch-checklist.txt` | copy it out of the space-named `release notes` folder (step 3) | on-call must find the checklist in the triage folder |
-| `triage/error-count.txt` and `triage/real-errors.txt` | build them from `app/logs/app.log` with `grep`, a pipe and `>` (step 4) | the handoff needs the real errors, not fifteen noisy lines |
-| `bin/status.sh` | `chmod 750` only - the content stays as shipped (step 5) | on-call must run the status check directly |
-| `env/deploy.env` | create from `env/deploy.env.example`, set `export DEPLOY_ENV=staging`, `chmod 600` (step 6) | the service must report the right deployment, privately |
-| `triage/port-diagnosis.txt` | two lines naming the symptom and its cause (step 7) | the postmortem needs the diagnosis on record |
-| `app/config/app.conf` | fix the `port=` line to the runbook's port (step 7) | the health check and the service must agree on one port |
-
-Leave `tests/`, `fixtures/` and `expected/` as they are: the eight
-checks pass only when the incident is really fixed.
-
-One test command proves the lab, run from this lab folder (step 8):
+## Your path
 
 ```text
-python -m unittest discover -s tests -v
+Open project -> Set up -> Tests: 8 fail -> Steps 3-7 -> Tests: 8 ok -> Stop
 ```
 
-Each failing check prints the next action to take.
+In words: open the project, set it up and see all 8 checks fail, work through
+steps 3 to 7, then run the checks again and stop when all 8 pass.
 
-## 1. Check your tools
+## Quick start
 
-Open a terminal at the repository root (the folder that holds this README).
-Type each command and press Enter:
+1. **Open the project.** Open this lab's folder in VS Code. It is already on your
+   machine, so you do not need to clone anything. Open a terminal with
+   **Terminal > New Terminal**; it starts in the project folder, the one that holds
+   this README.
+2. **Set up, then run the starter tests:**
+
+   ```text
+   python tests/setup_lab.py
+   python -m unittest discover -s tests -v
+   ```
+
+   **Expect:** `Incident ready in starter/incident/.`, then all 8 checks `FAIL`.
+   That is normal before you start: each failure message names what is missing.
+   Now move into the incident folder, where steps 3 to 7 happen:
+   `cd starter/incident`
+3. **Look around** and copy the launch checklist out of the `release notes` folder
+   into `triage/`. Check name: `checklist`.
+4. **Triage the log:** save the ERROR line count in `triage/error-count.txt` and only
+   the real errors in `triage/real-errors.txt`. Check names: `error_count`,
+   `real_errors`.
+5. **Fix the permissions:** make `bin/status.sh` runnable with mode `750`. Do not
+   change its content. Check name: `executable`.
+6. **Set the deployment:** create `env/deploy.env` with mode `600`. Check name:
+   `env_file`.
+7. **Find and fix the port mismatch:** write `triage/port-diagnosis.txt`, then fix
+   the port in `app/config/app.conf`. Check names: `diagnosis`, `config_port`.
+8. **Prove it:** go back to the project folder and run every check:
+
+   ```text
+   cd ../..
+   python -m unittest discover -s tests -v
+   ```
+
+   **Expect:** all 8 checks report `ok`, then `OK`. You are done: stop here.
+
+**Check one step at a time.** From `starter/incident`, put the step's check name
+after `-k`:
 
 ```text
-bash --version
-python --version
+python -m unittest discover -s ../../tests -v -k error_count
 ```
 
-**Expect:** any bash version, and `Python 3.11` or newer.
-If `python` is missing or old, try `python3 --version`; when that works, type
-`alias python=python3` once for this terminal window.
+**Expect:** that check reports `ok`. If it says `FAIL`, read the message under it.
 
-## 2. Create the incident
+## Step-by-step guide
 
-From this lab folder, run:
+Steps 3 to 7 run in the incident folder, `starter/incident`.
 
-```text
-python tests/setup_lab.py
-```
-
-**Expect:** `Incident ready in starter/incident/.`
-
-Setup creates the triage folder, the release manager's `release notes` folder,
-and ships `bin/status.sh` without execute permission - that broken permission is
-part of the incident. Running setup again resets the lab: your triage results
-and `env/deploy.env` are removed and every shipped file is restored.
-
-Move into the incident folder:
-
-```text
-cd starter/incident
-```
-
-## 3. Find your way around
+### Step 3: Find your way around
 
 ```text
 pwd
 ls -a
-ls app app/logs docs
 cat docs/RUNBOOK.md
 ```
 
-**Expect:** `pwd` ends in `starter/incident`; the listing shows `app`, `bin`,
-`docs`, `env`, `release notes` and `triage`. Read the runbook: it tells you how
-the service is supposed to look when healthy.
+**Expect:** `pwd` ends in `starter/incident`. The list shows `app`, `bin`, `docs`,
+`env`, `release notes` and `triage`. The runbook describes how the healthy service
+should look.
 
-The release manager keeps the launch checklist in a folder whose name contains
-a space. A bare `cd release notes` or `cp release notes/...` falls apart into
-two words, so quote the path:
+<details>
+<summary>Hint</summary>
+
+Relative paths such as `app/logs` start from where you are; `..` is the parent
+folder (so `cd ../..` goes up two levels) and `~` is your home folder.
+
+</details>
+
+A path with a space falls apart into two words unless you quote it:
 
 ```text
 ls "release notes"
 cp "release notes/launch-checklist.txt" triage/
 ```
 
-**Expect:** the copy succeeds; `ls triage` now shows `launch-checklist.txt`.
-(Relative paths like `app/logs` start from where you stand; `~` is your home
-folder and `..` is the parent - the checks only care that you end up in the
-right place.)
+**Expect:** `ls triage` now shows `launch-checklist.txt`.
 
-## 4. Triage the log with pipes and grep
+### Step 4: Triage the log with pipes and grep
 
-Look at the raw log first:
-
-```text
-cat app/logs/app.log
-```
-
-Fifteen lines, most of them noise. Narrow it down - a pipe (`|`) hands one
-command's output to the next:
+Read the log with `cat app/logs/app.log`: fifteen lines, mostly noise. A pipe (`|`)
+hands one command's output to the next, and `>` saves output to a file:
 
 ```text
 grep ERROR app/logs/app.log
-grep ERROR app/logs/app.log | wc -l
-```
-
-**Expect:** four ERROR lines, and `wc -l` counts them: `4`.
-Record the count by redirecting the pipeline's output into a file:
-
-```text
 grep ERROR app/logs/app.log | wc -l > triage/error-count.txt
 ```
 
-Two of those errors are just retry attempts. Keep the ERROR lines, then drop
-the ones that mention retrying with `-v` (invert the match):
+**Expect:** four ERROR lines, so the file holds `4`.
+
+Two of those errors are only retry attempts. `grep -v` keeps the lines that do
+**not** match:
 
 ```text
 grep ERROR app/logs/app.log | grep -v retrying > triage/real-errors.txt
@@ -147,77 +120,53 @@ cat triage/real-errors.txt
 ```
 
 **Expect:** exactly two lines: the first `connection refused` failure and the
-`UNHEALTHY` verdict. (`grep -i` would match any capitalisation; the log writes
-ERROR in capitals, so plain `grep` is enough here.)
+`UNHEALTHY` verdict.
 
-## 5. Fix the permissions
-
-The runbook says the on-call person runs the script directly. Try it:
+### Step 5: Fix the permissions
 
 ```text
 ./bin/status.sh
-```
-
-**Expect:** `permission denied`. Now look at why:
-
-```text
 ls -l bin/status.sh
 ```
 
-**Expect:** `-rw-r--r--` - owner read-write, group read, others read, and **no
-`x` anywhere**. Running a file directly needs execute permission. (Note that
-`bash bin/status.sh` works even now: there the program being executed is
-`bash`, which only *reads* the script.)
-
-The runbook asks for mode `750`: owner `rwx` (7), group `r-x` (5), others
-nothing (0):
+**Expect:** `permission denied`, and `-rw-r--r--` with no `x`: running a file
+directly needs execute permission. The runbook asks for mode `750`: owner `rwx` (7),
+group `r-x` (5), others nothing (0):
 
 ```text
 chmod 750 bin/status.sh
-ls -l bin/status.sh
 ./bin/status.sh
 ```
 
-**Expect:** `-rwxr-x---`, and the script now prints a status line:
+**Expect:** the script prints
 `status-page (development) expects http://localhost:9091/status`.
-Both parts of that line are still wrong; the next two steps fix them.
+Both `development` and `9091` are still wrong; steps 6 and 7 fix them.
 
-## 6. Set the deployment through the environment
+### Step 6: Set the deployment through the environment
 
-The script reads the deployment name from the `DEPLOY_ENV` environment
-variable. Watch what the environment actually does. First set a variable
-**without** `export`, then run the script:
+The script reads the deployment name from the `DEPLOY_ENV` environment variable.
+Try it without and then with `export`:
 
 ```text
 DEPLOY_ENV=staging
 ./bin/status.sh
-```
-
-**Expect:** still `(development)`. The variable exists only in your shell; a
-program you start is a new process and never sees unexported variables. Now:
-
-```text
 export DEPLOY_ENV=staging
 ./bin/status.sh
 ```
 
-**Expect:** `(staging)`. Exported variables are copied to every program the
-shell starts. Check it yourself with `echo $DEPLOY_ENV`.
+**Expect:** first `(development)`, then `(staging)`. A program you start only sees
+exported variables.
 
-Your exported variable disappears with this terminal, so the service loads its
-settings from a file. Create it from the example and set staging there:
+An exported variable disappears when the terminal closes, so the service reads its
+settings from a file. Create it from the example:
 
 ```text
 cp env/deploy.env.example env/deploy.env
 ```
 
-Open `env/deploy.env` in any editor and make its setting line exactly:
-
-```text
-export DEPLOY_ENV=staging
-```
-
-Deployment settings are nobody else's business - owner read-write only:
+Open `env/deploy.env` in the editor and make its setting line exactly
+`export DEPLOY_ENV=staging`. Deployment settings are private, so make the file
+owner read-write only:
 
 ```text
 chmod 600 env/deploy.env
@@ -226,99 +175,69 @@ ls -l env/deploy.env
 
 **Expect:** `-rw-------`.
 
-## 7. Find and fix the port mismatch
-
-Read the evidence you collected:
+### Step 7: Find and fix the port mismatch
 
 ```text
 cat triage/real-errors.txt
 grep port app/config/app.conf
 ```
 
-**Expect:** the health check calls `http://localhost:8080/status` and is
-refused, while the config says `port=9091`. In a URL like
-`http://localhost:8080`, `localhost` is the host - this machine itself,
-127.0.0.1 - and `8080` is the port. The service listens on 9091, the health
-check knocks on 8080, and nobody is listening there: **connection refused**.
-(The other classic port failure, `address already in use`, is the opposite:
-something is already listening where a program wants to start.)
+**Expect:** the health check calls `http://localhost:8080/status` and is refused,
+while the config says `port=9091`. In `http://localhost:8080`, `localhost` is this
+machine and `8080` is the port.
 
-Record the diagnosis as two lines in `triage/port-diagnosis.txt`. The cause is
-one of `nothing-listening`, `port-already-in-use` or `dns-failure` - pick the
-one the evidence supports:
+<details>
+<summary>Hint</summary>
+
+`address already in use` is a different port problem: something already listens
+where a program wants to start.
+
+</details>
+
+Create `triage/port-diagnosis.txt` with two lines. For the cause, pick the one the
+evidence supports: `nothing-listening`, `port-already-in-use` or `dns-failure`.
 
 ```text
 symptom=connection-refused
 cause=<your pick>
 ```
 
-Then fix the config: open `app/config/app.conf` and change the `port=` line to
-the runbook's port, keeping `host=localhost`. Run `./bin/status.sh` once more.
+Then open `app/config/app.conf`, change only the `port=` line to the runbook's port
+(keep `host=localhost`), and run `./bin/status.sh` again.
 
 **Expect:** `status-page (staging) expects http://localhost:8080/status`.
+Now do step 8.
 
-## 8. Prove it
+## Reference
 
-Return to the lab folder and run the checks:
-
-```text
-cd ../..
-python -m unittest discover -s tests -v
-```
-
-**Expect:** all eight checks report `ok`, then `OK` (see **Expected output** below).
-
-## How the checks work
-
-The test command is `python -m unittest discover -s tests -v`, run from this
-lab folder. It reads files and permission bits and runs `./bin/status.sh` once;
-it never needs the network.
-
-| Check | What it confirms |
-|---|---|
-| `test_checklist_copied_from_spaced_folder` | the checklist was copied out of the space-named folder, byte for byte |
-| `test_error_count_via_pipe` | `triage/error-count.txt` holds the ERROR line count (4) |
-| `test_real_errors_filtered` | `triage/real-errors.txt` holds exactly the two non-retry ERROR lines |
-| `test_script_is_executable_750` | `bin/status.sh` has mode `750` |
-| `test_env_file_exists_with_export_and_600` | `env/deploy.env` exports `DEPLOY_ENV=staging` and has mode `600` |
-| `test_config_port_matches_runbook` | `app.conf` says `port=8080` with `host=localhost` |
-| `test_port_diagnosis_recorded` | your diagnosis names the symptom and the right cause |
-| `test_status_script_runs_directly_and_reports_staging` | `./bin/status.sh` runs directly and prints the healthy line |
-
-## Expected output
-
-Right after setup, all eight checks fail, each with a message naming the next
-action. On completion the output matches `expected/on-completion.txt`; only the
-run time differs.
-
-## Offline note
-
-Setup and checks use only the shell and the Python standard library. The
-service never runs; its log and config are fixed files, so nothing listens on
-any port during this lab.
-
-## Cleanup
-
-When you are finished, run this from the lab folder:
-
-```text
-python tests/cleanup_lab.py
-```
-
-It removes `triage/`, the `release notes` folder, `env/deploy.env` and the
-Python cache in `tests/`, then restores the shipped files and the shipped
-permissions. It touches nothing outside this lab folder.
+- **What the 8 checks look at:** the copied checklist, the error count, the filtered
+  errors, the script's permission, the settings file and its permission, the config
+  port, your diagnosis, and whether `./bin/status.sh` runs directly and prints the
+  healthy line. They read files and permissions only; nothing uses the network.
+- **Expected output:** when everything passes, the output matches
+  `expected/on-completion.txt`; only the run time differs.
+- **Start again:** from the project folder, `python tests/setup_lab.py` resets the
+  lab. It removes your triage files and `env/deploy.env` and restores every shipped
+  file.
+- **Clean up when finished:** from the project folder, `python tests/cleanup_lab.py`
+  removes everything setup created and restores the shipped files and permissions.
+- **Leave these as they are:** `tests/`, `fixtures/` and `expected/`.
 
 ## Troubleshooting
 
-| Symptom | What to do |
+| Problem | Fix |
 |---|---|
-| `python: command not found` | Use `python3`, or `alias python=python3` for this terminal window. |
-| `The incident folder is missing` | Run `python tests/setup_lab.py` from the lab folder. |
-| You are on Windows and permissions never change | Run the whole lab inside an Ubuntu (WSL) terminal; the Windows file system does not carry Linux permission bits. |
-| `cp: release notes: No such file or directory` | The space split your path. Quote it: `cp "release notes/launch-checklist.txt" triage/`. |
-| `error-count.txt` holds the wrong number | Rebuild it exactly: `grep ERROR app/logs/app.log \| wc -l > triage/error-count.txt`. |
-| `./bin/status.sh: permission denied` after chmod | Check `ls -l bin/status.sh` shows `-rwxr-x---` (750), and that you ran chmod on `bin/status.sh`, not the example file. |
-| The status line still says `development` | `env/deploy.env` must exist and contain exactly `export DEPLOY_ENV=staging`. |
-| The status line still says `9091` | Edit `app/config/app.conf`: the `port=` line, nothing else. |
-| You are lost or past 20 minutes | Pause the exercise block and continue in self-study. If your lab state is broken, rerun `python tests/setup_lab.py` (it resets everything) and repeat the steps in order. |
+| `python: command not found`, or a version older than 3.11 | Run `python3 --version`. If that shows 3.11 or newer, type `alias python=python3` once in this terminal. |
+| `The incident folder is missing` | From the project folder, run `python tests/setup_lab.py`. |
+| A test command fails with `No such file or directory` | Check where you are with `pwd`. Use `-s tests` in the project folder and `-s ../../tests` in `starter/incident`. |
+| `cp: release notes: No such file or directory` | Put quotes around the path that contains the space. |
+| `./bin/status.sh: permission denied` after `chmod` | `ls -l bin/status.sh` must show `-rwxr-x---`. |
+| The status line still says `development` or `9091` | Recheck step 6 (`env/deploy.env`) or step 7 (the `port=` line only). |
+| You are on Windows and permissions never change | Run the whole lab in an Ubuntu (WSL) terminal: Windows file systems do not keep Linux permissions. |
+| Your lab state is broken | From the project folder, run `python tests/setup_lab.py`, then repeat the steps in order. |
+
+## Optional: work on your own computer
+
+You only need this if you were not given the project. Clone
+`https://github.com/JesterCharles/pep-foundation-git-linux-ai-linux-foundations-lab`,
+open the cloned folder in VS Code or another editor, and start at **Quick start**.
