@@ -80,8 +80,15 @@ cat docs/RUNBOOK.md
 
 **Expect:** `pwd` ends in `starter/incident`. The list shows `app`, `bin`, `docs`,
 `env`, `release notes` and `triage`. The runbook describes how the healthy service
-should look. Relative paths such as `app/logs` start from where you are; `..` is
-the parent folder (so `cd ../..` goes up two levels) and `~` is your home folder.
+should look.
+
+<details>
+<summary>Hint</summary>
+
+Relative paths such as `app/logs` start from where you are; `..` is the parent
+folder (so `cd ../..` goes up two levels) and `~` is your home folder.
+
+</details>
 
 A path with a space falls apart into two words unless you quote it:
 
@@ -177,8 +184,15 @@ grep port app/config/app.conf
 
 **Expect:** the health check calls `http://localhost:8080/status` and is refused,
 while the config says `port=9091`. In `http://localhost:8080`, `localhost` is this
-machine and `8080` is the port. (`address already in use` is a different port
-problem: something already listens where a program wants to start.)
+machine and `8080` is the port.
+
+<details>
+<summary>Hint</summary>
+
+`address already in use` is a different port problem: something already listens
+where a program wants to start.
+
+</details>
 
 Create `triage/port-diagnosis.txt` with two lines. For the cause, pick the one the
 evidence supports: `nothing-listening`, `port-already-in-use` or `dns-failure`.
