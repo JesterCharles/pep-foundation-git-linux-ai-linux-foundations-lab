@@ -1,4 +1,5 @@
 # Created by setup and by the test run; rebuild with: python tests/setup_lab.py
+/reports/
 __pycache__/
 *.pyc
 /starter/incident/triage/

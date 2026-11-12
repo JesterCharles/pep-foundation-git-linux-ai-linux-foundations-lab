@@ -1,0 +1,17 @@
+# Exa grading manifest for this Python lab: best-effort, not yet verified inside
+# Exa Studio. It follows the observed Exa schema (everything under 'test:') and
+# is meant to drive both local Run Tests and grading.
+#
+# ASSUMPTIONS: no 'image' and no 'setup' are declared, so Exa's documented
+# fallback to the project's pinned runtime pack applies; that pack must provide
+# Python 3.11 or newer as 'python' (and Git for the Git lab). Everything uses the
+# Python standard library, so nothing is installed at test time.
+#
+# The command runs from the repository root. .evolv/junit_runner.py runs the same
+# checks as `python -m unittest discover -s tests -v`, with the same output, and
+# writes a JUnit XML report to reports/junit.xml. A lab that was never set up
+# (checks skipped) or a run with zero checks exits non-zero and fails. It never
+# runs tests/setup_lab.py, which would reset the learner's work.
+test:
+  command: "python .evolv/junit_runner.py"
+  reports: "reports/*.xml"
