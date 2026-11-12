@@ -235,9 +235,4 @@ Now do step 8.
 | The status line still says `development` or `9091` | Recheck step 6 (`env/deploy.env`) or step 7 (the `port=` line only). |
 | You are on Windows and permissions never change | Run the whole lab in an Ubuntu (WSL) terminal: Windows file systems do not keep Linux permissions. |
 | Your lab state is broken | From the project folder, run `python tests/setup_lab.py`, then repeat the steps in order. |
-
-## Optional: work on your own computer
-
-You only need this if you were not given the project. Clone
-`https://github.com/JesterCharles/pep-foundation-git-linux-ai-linux-foundations-lab`,
-open the cloned folder in VS Code or another editor, and start at **Quick start**.
+| Project files are missing, or setup cannot find them | Ask your trainer to repair the supplied project. Everything the lab needs is in this folder; do not download it from anywhere else. |
