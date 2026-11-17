@@ -89,7 +89,7 @@ def test_task5_port_fixed_and_diagnosed(tmp_path):
     diagnosis = incident / "triage" / "port-diagnosis.txt"
     assert diagnosis.exists(), (
         "Task 5: triage/port-diagnosis.txt does not exist. Write the two lines symptom=... and "
-        "cause=... from Task 5 of the lab instructions."
+        "cause=... from Task 5 of the lab README."
     )
     lines = lines_of(diagnosis)
     assert "symptom=connection-refused" in lines, (
@@ -98,7 +98,7 @@ def test_task5_port_fixed_and_diagnosed(tmp_path):
     )
     assert "cause=nothing-listening" in lines, (
         "Task 5: the diagnosis needs the cause the evidence supports, picked from the three in the "
-        "lab instructions. Connection refused means no program is listening on that port; "
+        "lab README. Connection refused means no program is listening on that port; "
         "address already in use means two programs want the same port."
     )
     config = lines_of(incident / "app" / "config" / "app.conf")
