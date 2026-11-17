@@ -11,7 +11,7 @@ from pathlib import Path
 
 LAB_ROOT = Path(__file__).resolve().parent.parent
 FIXTURES = LAB_ROOT / "fixtures"
-STARTER = LAB_ROOT / "starter"
+STARTER = LAB_ROOT / "src"
 INCIDENT = STARTER / "incident"
 SPACED = INCIDENT / "release notes"
 TRIAGE = INCIDENT / "triage"
@@ -30,7 +30,7 @@ CREATED_PATHS = [
     SPACED,
     TRIAGE,
     INCIDENT / "env" / "deploy.env",
-    LAB_ROOT / "tests" / "__pycache__",
+    LAB_ROOT / "test" / "__pycache__",
 ]
 
 
@@ -42,9 +42,9 @@ def inside(path, parent):
 
 
 def remove(path):
-    """Remove a lab-created path after confirming it is inside the starter or tests folder."""
+    """Remove a lab-created path after confirming it is inside the src or test folder."""
     path = Path(path)
-    if not (inside(path, STARTER) or inside(path, LAB_ROOT / "tests")):
+    if not (inside(path, STARTER) or inside(path, LAB_ROOT / "test")):
         raise RuntimeError(f"refusing to remove {path}: outside the lab")
     if path.is_dir() and not path.is_symlink():
         shutil.rmtree(path)

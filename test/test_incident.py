@@ -1,6 +1,6 @@
 """Checks for the "Service will not start" lab. Run from the lab folder:
 
-    python -m unittest discover -s tests -v
+    python -m pytest -q
 
 Each failure message names the next action.
 """
@@ -8,9 +8,9 @@ Each failure message names the next action.
 import subprocess
 import unittest
 
-from lab_support import FIXTURES, INCIDENT, SPACED, TRIAGE, mode_of, require_posix
+from test.lab_support import FIXTURES, INCIDENT, SPACED, TRIAGE, mode_of, require_posix
 
-SETUP_HINT = "Run `python tests/setup_lab.py` from the lab folder first."
+SETUP_HINT = "Run `python test/setup_lab.py` from the lab folder first."
 
 
 def read(path):
@@ -126,7 +126,7 @@ class IncidentTest(unittest.TestCase):
         self.assertTrue(
             target.exists(),
             "Record your diagnosis in triage/port-diagnosis.txt with the two lines from "
-            "step 7 of the README (Find and fix the port mismatch).",
+            "step 7 of the lab instructions (Find and fix the port mismatch).",
         )
         diagnosis = read(target)
         self.assertIn(
@@ -138,7 +138,7 @@ class IncidentTest(unittest.TestCase):
         self.assertIn(
             "cause=nothing-listening",
             diagnosis,
-            "The second line must name the cause from the README's three choices. "
+            "The second line must name the cause from the three choices in the lab instructions. "
             "Connection refused means no program is listening on that port; compare "
             "address already in use, which means two programs want the same port.",
         )

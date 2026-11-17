@@ -1,17 +1,17 @@
-# Exa grading manifest for this Python lab: best-effort, not yet verified inside
-# Exa Studio. It follows the observed Exa schema (everything under 'test:') and
-# is meant to drive both local Run Tests and grading.
+# Exa grading manifest: the SAME manifest drives local Run Tests AND the
+# server-side grader (parity). Schema: everything under 'test:'; 'setup'
+# installs deps so the grader's env matches the local venv.
 #
-# ASSUMPTIONS: no 'image' and no 'setup' are declared, so Exa's documented
-# fallback to the project's pinned runtime pack applies; that pack must provide
-# Python 3.11 or newer as 'python' (and Git for the Git lab). Everything uses the
-# Python standard library, so nothing is installed at test time.
+# `image` makes the block run in a container, so local Run Tests and grading
+# use the same interpreter and pinned deps. Dependencies are baked into the
+# image (see Dockerfile), so `setup` is a cache hit and grading works offline.
 #
-# The command runs from the repository root. .evolv/junit_runner.py runs the same
-# checks as `python -m unittest discover -s tests -v`, with the same output, and
-# writes a JUnit XML report to reports/junit.xml. A lab that was never set up
-# (checks skipped) or a run with zero checks exits non-zero and fails. It never
-# runs tests/setup_lab.py, which would reset the learner's work.
+# The command never runs test/setup_lab.py, which would reset the learner's
+# work. test/conftest.py turns every skipped check (the lab was never set up)
+# into a failure, and a run with no checks exits non-zero, so an untouched
+# project never passes.
 test:
-  command: "python .evolv/junit_runner.py"
+  image: "evolv/python-3.12"
+  setup: ["pip install -r requirements.txt"]
+  command: "python -m pytest -q --junitxml=reports/out.xml"
   reports: "reports/*.xml"

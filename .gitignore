@@ -1,20 +1,25 @@
-# Created by setup and by the test run; rebuild with: python tests/setup_lab.py
-/reports/
+# Python
 __pycache__/
-*.pyc
-/starter/incident/triage/
-/starter/incident/release notes/
-/starter/incident/env/deploy.env
+*.py[cod]
+*.egg-info/
+.venv/
+.env
+reports/
+.pytest_cache/
+
+# Node
+node_modules/
+
+# The lab's own files. Your work in src/incident/triage/ is committed and
+# submitted; env/deploy.env holds settings, so it stays out of Git (see below).
 
 # Local secrets and environment files: never commit them
-.env
 .env.*
 *.env
 !.env.example
 !*.env.example
 
-# Editor and OS files
-.vscode/
+# Editor and OS files (.vscode/ stays tracked: it holds the Run Tests task)
 .idea/
 .DS_Store
 Thumbs.db

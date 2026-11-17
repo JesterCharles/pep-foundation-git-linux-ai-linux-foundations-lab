@@ -1,13 +1,18 @@
-"""Create (or reset) the incident in starter/incident/.
+"""Create (or reset) the incident in src/incident/.
 
-Run from the lab folder:  python tests/setup_lab.py
+Run from the lab folder:  python test/setup_lab.py
 Re-running it is the reset path: it removes your triage work and deploy.env and
 restores the shipped files and the shipped (broken) permissions.
 """
 
 import sys
+from pathlib import Path
 
-from lab_support import FIXTURES, INCIDENT, SPACED, TRIAGE, require_posix, reset_starter, write_fixture
+# Run as a script (python test/setup_lab.py): put the project folder on the import
+# path so the shared helpers load as test.lab_support, the name pytest uses.
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from test.lab_support import FIXTURES, INCIDENT, SPACED, TRIAGE, require_posix, reset_starter, write_fixture
 
 
 def main():
@@ -23,8 +28,8 @@ def main():
     write_fixture(FIXTURES / "launch-checklist.txt", SPACED / "launch-checklist.txt")
     TRIAGE.mkdir(parents=True, exist_ok=True)
 
-    print("Incident ready in starter/incident/.")
-    print("Next: cd starter/incident, then read docs/RUNBOOK.md and run ls -a.")
+    print("Incident ready in src/incident/.")
+    print("Next: cd src/incident, then read docs/RUNBOOK.md and run ls -a.")
 
 
 if __name__ == "__main__":
