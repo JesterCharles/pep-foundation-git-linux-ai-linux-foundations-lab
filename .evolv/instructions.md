@@ -6,66 +6,81 @@ the Linux shell to find the real errors, fix a file permission, set an environme
 variable and fix the port mismatch behind `connection refused`. The service never
 actually runs: all the evidence is in files.
 
+You write the commands for each task into a bash script in `src/`. The tests copy
+the incident folder into a fresh temporary folder, run your script there and check
+what it left behind. So try your commands in a practice copy first, then put the
+ones that work into the script.
+
 - **Time:** about 15 minutes. If you pass 20, pause and finish in self-study.
-- **You need:** a bash terminal and Python 3.11 or newer. Linux permissions are part
-  of the lab, so use macOS or Linux (on Windows, see **Troubleshooting**).
+- **You need:** the lab's Linux terminal (bash). Permissions are part of the lab, so
+  it does not work in a Windows terminal.
 - **Offline:** no account, network or AI assistant.
 
 ## Your path
 
 ```text
-Set up -> Run Tests: 8 fail -> Steps 3-7 -> Run Tests: 8 pass -> Submit
+Run Tests: 5 fail -> practice copy -> Tasks 1-5 (one script each) -> Run Tests: 5 pass -> Submit
 ```
 
-In words: set the lab up and see all 8 checks fail, work through steps 3 to 7, then
-select **Run Tests** again and select **Submit** when all 8 pass.
+In words: run the tests and see all 5 fail, make a practice copy, work through the
+five tasks, writing each task's commands into its script, then select **Run Tests**
+again and select **Submit** when all 5 pass.
 
 ## Quick start
 
-1. **Open a terminal** with **Terminal > New Terminal**. It starts in the project
-   folder, the one that holds `src/`, `test/` and `fixtures/`.
-2. **Set up the incident, then run the tests:**
+1. Select **Run Tests** before you change anything.
+
+   **All 5 visible tests fail at first. That is expected: the scripts only hold
+   `TODO` comments.** Every failure message starts with its task number, such as
+   `Task 2:`.
+2. **Make a practice copy of the incident.** Open a terminal with
+   **Terminal > New Terminal** (it starts in the project folder) and run:
 
    ```text
-   python test/setup_lab.py
+   python -m test.sandbox
    ```
 
-   **Expect:** `Incident ready in src/incident/.` Now select **Run Tests**.
-   **All 8 checks fail at first. That is expected:** each failure message names
-   what is missing. Then move into the incident folder, where steps 3 to 7 happen:
-   `cd src/incident`
-3. **Look around** and copy the launch checklist out of the `release notes` folder
-   into `triage/`. Check name: `checklist`.
-4. **Triage the log:** save the ERROR line count in `triage/error-count.txt` and only
-   the real errors in `triage/real-errors.txt`. Check names: `error_count`,
-   `real_errors`.
-5. **Fix the permissions:** make `bin/status.sh` runnable with mode `750`. Do not
-   change its content. Check name: `executable`.
-6. **Set the deployment:** create `env/deploy.env` with mode `600`. Check name:
-   `env_file`.
-7. **Find and fix the port mismatch:** write `triage/port-diagnosis.txt`, then fix
-   the port in `app/config/app.conf`. Check names: `diagnosis`, `config_port`.
-8. **Prove it:** select **Run Tests** again.
+   **Expect:** `Practice incident ready in ...` and a `cd` line. Run that `cd` line:
+   you are now in a throwaway copy of the incident. Try commands there as much as you
+   like; `python -m test.sandbox` (from the project folder) makes a fresh copy.
+3. Work through the checklist below. For each task, try the commands in the practice
+   copy, then put them in the task's script in `src/`, in the order you ran them.
+   Select **Run Tests** after each task and read the remaining `Task N:` messages.
+4. **You are finished when all 5 tests pass.** Then select **Submit**. Submitting also
+   runs held-out tests you can't see. They run your scripts again, for example on a
+   log with different errors, so write commands that work things out rather than
+   typing in the answers.
 
-   **Expect:** all 8 checks pass. **You are finished when all 8 pass.** Then select
-   **Submit**.
+## Checklist
 
-**Check one step at a time.** From `src/incident`, put the step's check name after
-`-k`:
+- [ ] Task 1: `src/task1_checklist.sh` copies the launch checklist into `triage/`
+- [ ] Task 2: `src/task2_triage.sh` saves the error count and the real errors
+- [ ] Task 3: `src/task3_permissions.sh` makes `bin/status.sh` mode `750`
+- [ ] Task 4: `src/task4_environment.sh` creates `env/deploy.env` with mode `600`
+- [ ] Task 5: `src/task5_port.sh` records the diagnosis and fixes the port
 
-```text
-python -m pytest -q ../../test -k error_count
-```
+A task is done when no failure message starts with its number.
 
-**Expect:** `1 passed` (the other checks show as `deselected`). If it says `failed`, read the message under it. From the
-project folder, the same check is `python -m pytest -q -k error_count`, and
-`python -m pytest -q` runs all 8, exactly as **Run Tests** does.
+## How your scripts run
 
-## Step-by-step guide
+- Each script runs with `bash` **inside the incident folder**, the one that holds
+  `app/`, `bin/`, `docs/`, `env/`, `release notes/` and `triage/`. Use paths relative
+  to it, such as `app/logs/app.log`. Do not `cd` anywhere else.
+- Every test starts from a fresh copy of the incident and runs only that task's
+  script. So each script must do its whole task by itself.
+- The scripts start with `set -euo pipefail`: the script stops at the first command
+  that fails, and the test shows bash's error message.
+- To run one of your scripts on your practice copy, run it from the incident folder:
+  `bash <project folder>/src/task2_triage.sh`. `python -m test.sandbox` prints the
+  exact path.
 
-Steps 3 to 7 run in the incident folder, `src/incident`.
+## Task steps
 
-### Step 3: Find your way around
+Paths below are relative to the incident folder.
+
+### Task 1: Find your way around
+
+Look around the practice copy:
 
 ```text
 pwd
@@ -73,15 +88,14 @@ ls -a
 cat docs/RUNBOOK.md
 ```
 
-**Expect:** `pwd` ends in `src/incident`. The list shows `app`, `bin`, `docs`,
-`env`, `release notes` and `triage`. The runbook describes how the healthy service
-should look.
+**Expect:** the list shows `app`, `bin`, `docs`, `env`, `release notes` and `triage`.
+The runbook describes how the healthy service should look.
 
 <details>
 <summary>Hint</summary>
 
-Relative paths such as `app/logs` start from where you are; `..` is the parent
-folder (so `cd ../..` goes up two levels) and `~` is your home folder.
+Relative paths such as `app/logs` start from where you are; `..` is the parent folder
+(so `cd ../..` goes up two levels) and `~` is your home folder.
 
 </details>
 
@@ -92,9 +106,10 @@ ls "release notes"
 cp "release notes/launch-checklist.txt" triage/
 ```
 
-**Expect:** `ls triage` now shows `launch-checklist.txt`.
+**Expect:** `ls triage` now shows `launch-checklist.txt`. Put the `cp` command in
+`src/task1_checklist.sh`. Copy the file; do not move it.
 
-### Step 4: Triage the log with pipes and grep
+### Task 2: Triage the log with pipes and grep
 
 Read the log with `cat app/logs/app.log`: fifteen lines, mostly noise. A pipe (`|`)
 hands one command's output to the next, and `>` saves output to a file:
@@ -115,9 +130,11 @@ cat triage/real-errors.txt
 ```
 
 **Expect:** exactly two lines: the first `connection refused` failure and the
-`UNHEALTHY` verdict.
+`UNHEALTHY` verdict. Put the two commands that write the files in
+`src/task2_triage.sh`. The held-out tests run it on a different log, so let `grep`
+and `wc` find the answers.
 
-### Step 5: Fix the permissions
+### Task 3: Fix the permissions
 
 ```text
 ./bin/status.sh
@@ -135,12 +152,14 @@ chmod 750 bin/status.sh
 
 **Expect:** the script prints
 `status-page (development) expects http://localhost:9091/status`.
-Both `development` and `9091` are still wrong; steps 6 and 7 fix them.
+Both `development` and `9091` are still wrong; Tasks 4 and 5 fix them. Put the
+`chmod` command in `src/task3_permissions.sh`. Do not change the script's content.
 
-### Step 6: Set the deployment through the environment
+### Task 4: Set the deployment through the environment
 
-The script reads the deployment name from the `DEPLOY_ENV` environment variable.
-Try it without and then with `export`:
+`bin/status.sh` reads the deployment name from the `DEPLOY_ENV` environment variable.
+In your practice copy (with Task 3 done there), try it without and then with
+`export`:
 
 ```text
 DEPLOY_ENV=staging
@@ -153,27 +172,25 @@ export DEPLOY_ENV=staging
 exported variables.
 
 An exported variable disappears when the terminal closes, so the service reads its
-settings from a file. Create it from the example:
+settings from a file. Create it from the example, set the value, and make it private:
 
 ```text
 cp env/deploy.env.example env/deploy.env
-```
-
-Open `env/deploy.env` in the editor and make its setting line exactly
-`export DEPLOY_ENV=staging`. Deployment settings are private, so make the file
-owner read-write only:
-
-```text
+sed -i 's/^export DEPLOY_ENV=.*/export DEPLOY_ENV=staging/' env/deploy.env
 chmod 600 env/deploy.env
+cat env/deploy.env
 ls -l env/deploy.env
 ```
 
-**Expect:** `-rw-------`.
+**Expect:** the last line of the file is exactly `export DEPLOY_ENV=staging`, and
+`ls -l` shows `-rw-------`. `sed -i 's/old/new/' file` edits a file in place: here it
+replaces the whole line that starts with `export DEPLOY_ENV=`. Put the three commands
+that change files in `src/task4_environment.sh`. Keep the example file as it is.
 
-### Step 7: Find and fix the port mismatch
+### Task 5: Find and fix the port mismatch
 
 ```text
-cat triage/real-errors.txt
+grep ERROR app/logs/app.log | grep -v retrying
 grep port app/config/app.conf
 ```
 
@@ -189,49 +206,57 @@ where a program wants to start.
 
 </details>
 
-Create `triage/port-diagnosis.txt` with two lines. For the cause, pick the one the
-evidence supports: `nothing-listening`, `port-already-in-use` or `dns-failure`.
+Your diagnosis goes in `triage/port-diagnosis.txt`, two lines. For the cause, pick
+the one the evidence supports: `nothing-listening`, `port-already-in-use` or
+`dns-failure`.
 
 ```text
 symptom=connection-refused
 cause=<your pick>
 ```
 
-Then open `app/config/app.conf`, change only the `port=` line to the runbook's port
-(keep `host=localhost`), and run `./bin/status.sh` again.
+`printf` writes several lines in one command, one `%s\n` per line:
 
-**Expect:** `status-page (staging) expects http://localhost:8080/status`.
-Now do step 8.
+```text
+printf '%s\n' 'symptom=connection-refused' 'cause=<your pick>' > triage/port-diagnosis.txt
+```
+
+Then change only the `port=` line of `app/config/app.conf` to the runbook's port, and
+keep `host=localhost`:
+
+```text
+sed -i 's/^port=.*/port=<the runbook port>/' app/config/app.conf
+```
+
+Put both commands, with your values filled in, in `src/task5_port.sh`. In your
+practice copy, with Tasks 3 to 5 done, `./bin/status.sh` now prints
+`status-page (staging) expects http://localhost:8080/status`.
 
 ## Reference
 
-- **What the 8 checks look at:** the copied checklist, the error count, the filtered
-  errors, the script's permission, the settings file and its permission, the config
-  port, your diagnosis, and whether `./bin/status.sh` runs directly and prints the
-  healthy line. They read files and permissions only; nothing uses the network.
-- **Run Tests** runs `python -m pytest -q` in the project folder. A check that could
-  not run because the lab was never set up counts as a failure.
-- **Expected output:** when everything passes, the output matches
-  `expected/on-completion.txt`; only the run time differs.
-- **Start again:** from the project folder, `python test/setup_lab.py` resets the
-  lab. It removes your triage files and `env/deploy.env` and restores every shipped
-  file.
-- **Clean up when finished:** from the project folder, `python test/cleanup_lab.py`
-  removes everything setup created and restores the shipped files and permissions.
-- **Leave these as they are:** `test/`, `fixtures/` and `expected/`. The tests in
-  `test/` are restored to their original state before your work is graded, so
-  changes to them do not count.
+- **What the 5 visible tests check:** the copied checklist; the error count and the
+  real errors; the script's permission; the settings file, its export line and its
+  permission; your diagnosis and the config port. Each one runs only its own task's
+  script on a fresh copy of the incident.
+- **Held-out tests**, run on Submit, also check that the originals stay in place,
+  that your scripts work on different evidence, that only the lines you were asked
+  to change change, and that `./bin/status.sh` prints the healthy line once all your
+  scripts have run.
+- **Run Tests** runs `python -m pytest -q` in the project folder. To run the checks
+  for one task only, add `-k` and the task: `python -m pytest -q -k task2`.
+- **Edit only the scripts in `src/`.** The tests in `test/` and the incident in
+  `test/fixtures/` are restored to their original state before your work is graded,
+  so changes to them do not count.
 
 ## Troubleshooting
 
 | Problem | Fix |
 |---|---|
-| `python: command not found`, or a version older than 3.11 | Run `python3 --version`. If that shows 3.11 or newer, type `alias python=python3` once in this terminal. |
-| `Not run: The incident folder is missing` | From the project folder, run `python test/setup_lab.py`, then select **Run Tests** again. |
-| A test command fails with `file or directory not found` or finds no tests | Check where you are with `pwd`. Use `python -m pytest -q` in the project folder and `python -m pytest -q ../../test` in `src/incident`. |
+| `Task N: src/... stopped with exit code 1` | bash's message is shown after it. Run the script on your practice copy to see the same error. A `grep` that matches nothing also stops the script. |
+| `No such file or directory` for `app/...` or `triage/...` | The script runs inside the incident folder. Remove any `cd` lines and use paths such as `app/logs/app.log`. |
 | `cp: release notes: No such file or directory` | Put quotes around the path that contains the space. |
+| The error count is right in practice but wrong in the test | Make sure the script counts with `grep ... \| wc -l` rather than writing a number. |
 | `./bin/status.sh: permission denied` after `chmod` | `ls -l bin/status.sh` must show `-rwxr-x---`. |
-| The status line still says `development` or `9091` | Recheck step 6 (`env/deploy.env`) or step 7 (the `port=` line only). |
-| You are on Windows and permissions never change | Run the whole lab in an Ubuntu (WSL) terminal: Windows file systems do not keep Linux permissions. |
-| Your lab state is broken | From the project folder, run `python test/setup_lab.py`, then repeat the steps in order. |
-| Project files are missing, or setup cannot find them | Ask your trainer to repair the supplied project. Everything the lab needs is in this folder; do not download it from anywhere else. |
+| The status line still says `development` or `9091` | Recheck Task 4 (`env/deploy.env`) or Task 5 (the `port=` line only). |
+| `This lab runs on Linux` | Use the lab's Linux terminal. Windows file systems do not keep Linux permissions. |
+| Your practice copy is a mess | From the project folder, run `python -m test.sandbox` again and use the new copy. |

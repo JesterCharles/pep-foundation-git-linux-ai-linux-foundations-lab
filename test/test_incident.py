@@ -1,172 +1,109 @@
-"""Checks for the "Service will not start" lab. Run from the lab folder:
+"""Trainer-authored tests — restored over the learner checkout at grade time.
 
-    python -m pytest -q
-
-Each failure message names the next action.
+One check per task. Each one runs that task's script from src/ on a fresh copy
+of the incident (see test/support.py) and checks what it left behind.
 """
 
-import subprocess
-import unittest
-
-from test.lab_support import FIXTURES, INCIDENT, SPACED, TRIAGE, mode_of, require_posix
-
-SETUP_HINT = "Run `python test/setup_lab.py` from the lab folder first."
-
-
-def read(path):
-    return path.read_text(encoding="utf-8")
+from test.support import (
+    INCIDENT_FIXTURE,
+    lines_of,
+    make_incident,
+    mode_of,
+    read,
+    run_task,
+)
 
 
-class IncidentTest(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        require_posix()
-        if not SPACED.exists() or not TRIAGE.exists():
-            raise unittest.SkipTest(f"The incident folder is missing. {SETUP_HINT}")
-
-    def test_checklist_copied_from_spaced_folder(self):
-        target = TRIAGE / "launch-checklist.txt"
-        self.assertTrue(
-            target.exists(),
-            'Copy the checklist out of the folder whose name contains a space: '
-            'cp "release notes/launch-checklist.txt" triage/ '
-            "(the quotes keep the space from splitting the path).",
-        )
-        self.assertEqual(
-            read(FIXTURES / "launch-checklist.txt"),
-            read(target),
-            "triage/launch-checklist.txt differs from the release manager's copy. "
-            'Copy it again with cp "release notes/launch-checklist.txt" triage/.',
-        )
-
-    def test_error_count_via_pipe(self):
-        target = TRIAGE / "error-count.txt"
-        self.assertTrue(
-            target.exists(),
-            "Count the ERROR lines by piping grep into wc -l and redirect the result: "
-            "grep ERROR app/logs/app.log | wc -l > triage/error-count.txt",
-        )
-        self.assertEqual(
-            "4",
-            read(target).strip(),
-            "triage/error-count.txt should hold the number of ERROR lines in app/logs/app.log. "
-            "Rebuild it with: grep ERROR app/logs/app.log | wc -l > triage/error-count.txt",
-        )
-
-    def test_real_errors_filtered(self):
-        target = TRIAGE / "real-errors.txt"
-        self.assertTrue(
-            target.exists(),
-            "Keep the ERROR lines but drop the retry noise: "
-            "grep ERROR app/logs/app.log | grep -v retrying > triage/real-errors.txt",
-        )
-        lines = [line for line in read(target).splitlines() if line.strip()]
-        self.assertEqual(
-            2,
-            len(lines),
-            "triage/real-errors.txt should hold exactly the two ERROR lines that are not "
-            "retry attempts. Rebuild it with: "
-            "grep ERROR app/logs/app.log | grep -v retrying > triage/real-errors.txt",
-        )
-        self.assertTrue(
-            all("ERROR" in line and "retrying" not in line for line in lines),
-            "triage/real-errors.txt contains a non-ERROR or retrying line. "
-            "The first grep keeps ERROR lines; grep -v retrying then removes the retries.",
-        )
-
-    def test_script_is_executable_750(self):
-        script = INCIDENT / "bin" / "status.sh"
-        self.assertEqual(
-            "750",
-            mode_of(script),
-            f"bin/status.sh has mode {mode_of(script)}, but the runbook asks for 750 "
-            "(owner read-write-execute, group read-execute, others nothing). "
-            "Run: chmod 750 bin/status.sh",
-        )
-
-    def test_env_file_exists_with_export_and_600(self):
-        env_file = INCIDENT / "env" / "deploy.env"
-        self.assertTrue(
-            env_file.exists(),
-            "Create the deployment settings file from its example: "
-            "cp env/deploy.env.example env/deploy.env, then edit the value.",
-        )
-        self.assertIn(
-            "export DEPLOY_ENV=staging",
-            read(env_file),
-            "env/deploy.env must set the staging deployment with an export line, exactly: "
-            "export DEPLOY_ENV=staging "
-            "(without export, a variable set in your shell is invisible to programs you start).",
-        )
-        self.assertEqual(
-            "600",
-            mode_of(env_file),
-            f"env/deploy.env has mode {mode_of(env_file)}, but deployment settings are for the "
-            "owner only: chmod 600 env/deploy.env",
-        )
-
-    def test_config_port_matches_runbook(self):
-        config = read(INCIDENT / "app" / "config" / "app.conf")
-        self.assertIn(
-            "port=8080",
-            config,
-            "app/config/app.conf still points at the wrong port. The runbook says the service "
-            "must listen on http://localhost:8080, and the log shows the health check being "
-            "refused there. Edit the port= line to 8080.",
-        )
-        self.assertIn(
-            "host=localhost",
-            config,
-            "Keep host=localhost in app/config/app.conf: the service and its health check run "
-            "on this machine.",
-        )
-
-    def test_port_diagnosis_recorded(self):
-        target = TRIAGE / "port-diagnosis.txt"
-        self.assertTrue(
-            target.exists(),
-            "Record your diagnosis in triage/port-diagnosis.txt with the two lines from "
-            "step 7 of the lab instructions (Find and fix the port mismatch).",
-        )
-        diagnosis = read(target)
-        self.assertIn(
-            "symptom=connection-refused",
-            diagnosis,
-            "The first line must be symptom=connection-refused: that is what the health "
-            "check hit on port 8080.",
-        )
-        self.assertIn(
-            "cause=nothing-listening",
-            diagnosis,
-            "The second line must name the cause from the three choices in the lab instructions. "
-            "Connection refused means no program is listening on that port; compare "
-            "address already in use, which means two programs want the same port.",
-        )
-
-    def test_status_script_runs_directly_and_reports_staging(self):
-        script = INCIDENT / "bin" / "status.sh"
-        if mode_of(script) != "750":
-            self.fail("Make bin/status.sh executable first: chmod 750 bin/status.sh")
-        result = subprocess.run(
-            ["./bin/status.sh"],
-            cwd=INCIDENT,
-            capture_output=True,
-            text=True,
-            env={"PATH": "/usr/bin:/bin"},
-        )
-        self.assertEqual(
-            0,
-            result.returncode,
-            f"./bin/status.sh failed: {result.stderr.strip()} - "
-            "check the execute permission and the deploy.env file.",
-        )
-        self.assertEqual(
-            "status-page (staging) expects http://localhost:8080/status",
-            result.stdout.strip(),
-            "The status line is wrong. It should name the staging deployment (from "
-            "env/deploy.env) and port 8080 (from app/config/app.conf).",
-        )
+def test_task1_checklist_copied(tmp_path):
+    incident = make_incident(tmp_path)
+    run_task(1, incident)
+    target = incident / "triage" / "launch-checklist.txt"
+    assert target.exists(), (
+        "Task 1: triage/launch-checklist.txt does not exist. In src/task1_checklist.sh, copy it "
+        'out of the folder whose name contains a space: cp "release notes/launch-checklist.txt" triage/'
+    )
+    assert read(target) == read(INCIDENT_FIXTURE / "release notes" / "launch-checklist.txt"), (
+        "Task 1: triage/launch-checklist.txt differs from the release manager's copy. "
+        'Copy it with cp "release notes/launch-checklist.txt" triage/ and do not change it.'
+    )
 
 
-if __name__ == "__main__":
-    unittest.main()
+def test_task2_log_triaged(tmp_path):
+    incident = make_incident(tmp_path)
+    run_task(2, incident)
+    count = incident / "triage" / "error-count.txt"
+    assert count.exists(), (
+        "Task 2: triage/error-count.txt does not exist. Count the ERROR lines by piping grep "
+        "into wc -l: grep ERROR app/logs/app.log | wc -l > triage/error-count.txt"
+    )
+    assert read(count).strip() == "4", (
+        f"Task 2: triage/error-count.txt holds {read(count).strip()!r}, but app/logs/app.log has "
+        "4 ERROR lines. Build it with grep ERROR app/logs/app.log | wc -l > triage/error-count.txt"
+    )
+    real = incident / "triage" / "real-errors.txt"
+    assert real.exists(), (
+        "Task 2: triage/real-errors.txt does not exist. Keep the ERROR lines but drop the retry "
+        "noise: grep ERROR app/logs/app.log | grep -v retrying > triage/real-errors.txt"
+    )
+    assert len(lines_of(real)) == 2, (
+        f"Task 2: triage/real-errors.txt has {len(lines_of(real))} lines, but exactly two ERROR "
+        "lines are not retry attempts. Build it with "
+        "grep ERROR app/logs/app.log | grep -v retrying > triage/real-errors.txt"
+    )
+
+
+def test_task3_status_script_is_750(tmp_path):
+    incident = make_incident(tmp_path)
+    run_task(3, incident)
+    mode = mode_of(incident / "bin" / "status.sh")
+    assert mode == "750", (
+        f"Task 3: bin/status.sh has mode {mode}, but the runbook asks for 750 (owner "
+        "read-write-execute, group read-execute, others nothing). Use: chmod 750 bin/status.sh"
+    )
+
+
+def test_task4_deploy_env_created(tmp_path):
+    incident = make_incident(tmp_path)
+    run_task(4, incident)
+    env_file = incident / "env" / "deploy.env"
+    assert env_file.exists(), (
+        "Task 4: env/deploy.env does not exist. Create it from the example: "
+        "cp env/deploy.env.example env/deploy.env"
+    )
+    assert "export DEPLOY_ENV=staging" in lines_of(env_file), (
+        "Task 4: env/deploy.env must set the staging deployment with the whole line "
+        "export DEPLOY_ENV=staging (without export, programs you start cannot see the variable). "
+        "sed can change the example's line, for example: "
+        "sed -i 's/^export DEPLOY_ENV=.*/export DEPLOY_ENV=staging/' env/deploy.env"
+    )
+    mode = mode_of(env_file)
+    assert mode == "600", (
+        f"Task 4: env/deploy.env has mode {mode}, but deployment settings are for the owner "
+        "only: chmod 600 env/deploy.env"
+    )
+
+
+def test_task5_port_fixed_and_diagnosed(tmp_path):
+    incident = make_incident(tmp_path)
+    run_task(5, incident)
+    diagnosis = incident / "triage" / "port-diagnosis.txt"
+    assert diagnosis.exists(), (
+        "Task 5: triage/port-diagnosis.txt does not exist. Write the two lines symptom=... and "
+        "cause=... from Task 5 of the lab instructions."
+    )
+    lines = lines_of(diagnosis)
+    assert "symptom=connection-refused" in lines, (
+        "Task 5: the diagnosis needs the line symptom=connection-refused: that is what the health "
+        "check hit on port 8080."
+    )
+    assert "cause=nothing-listening" in lines, (
+        "Task 5: the diagnosis needs the cause the evidence supports, picked from the three in the "
+        "lab instructions. Connection refused means no program is listening on that port; "
+        "address already in use means two programs want the same port."
+    )
+    config = lines_of(incident / "app" / "config" / "app.conf")
+    assert "port=8080" in config, (
+        "Task 5: app/config/app.conf still has the wrong port. The runbook says the service must "
+        "listen on http://localhost:8080. Change the port= line, for example with "
+        "sed -i 's/^port=.*/port=8080/' app/config/app.conf"
+    )

@@ -1,3 +1,1 @@
-# The checks use only the Python standard library. pytest runs them (it runs
-# unittest test classes as they are) and writes the JUnit report for grading.
-pytest==8.2.0
+pytest
