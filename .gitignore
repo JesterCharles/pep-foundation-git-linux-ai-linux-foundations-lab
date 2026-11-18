@@ -1,20 +1,19 @@
-# Created by setup and by the test run; rebuild with: python tests/setup_lab.py
-/reports/
+# Python
 __pycache__/
-*.pyc
-/starter/incident/triage/
-/starter/incident/release notes/
-/starter/incident/env/deploy.env
-
-# Local secrets and environment files: never commit them
+*.py[cod]
+*.egg-info/
+.venv/
 .env
-.env.*
-*.env
-!.env.example
-!*.env.example
+reports/
 
-# Editor and OS files
-.vscode/
-.idea/
-.DS_Store
-Thumbs.db
+# Node
+node_modules/
+
+# Java
+target/
+build/
+.gradle/
+*.class
+
+# Editor files Exa Studio writes per machine
+.vscode/settings.json
